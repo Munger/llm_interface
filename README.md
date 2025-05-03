@@ -14,7 +14,6 @@ A flexible Python interface for locally hosted LLMs, focusing on Ollama integrat
 
 ## Installation
 
-```bash
 # Install from GitHub
 pip install git+https://github.com/Munger/llm_interface.git
 
@@ -22,13 +21,11 @@ pip install git+https://github.com/Munger/llm_interface.git
 git clone https://github.com/Munger/llm_interface.git
 cd llm_interface
 pip install -e .
-```
 
 ## Quick Start
 
 ### Python API
 
-```python
 from llm_interface import LLMClient
 
 # Create a client with default Ollama model
@@ -50,11 +47,9 @@ print(response)
 # Use research capabilities
 response = session.research("What are the latest developments in fusion energy?")
 print(response)
-```
 
 ### CLI Usage
 
-```bash
 # Single query
 llm-cli ask "What is the capital of France?"
 
@@ -63,7 +58,56 @@ llm-cli chat
 
 # Research with web search
 llm-cli research "Recent advances in quantum computing"
-```
+
+## Chat Research Commands
+
+During a chat session, you can initiate research using the `/research` command:
+
+### Python API
+
+from llm_interface import LLMClient
+
+# Create a client
+client = LLMClient()
+
+# Create a session
+session = client.create_session()
+
+# Start a normal chat
+response = session.chat("Tell me about quantum computing")
+print(response)
+
+# Use the research command in chat
+response = session.chat("/research latest developments in quantum computing")
+print(response)
+
+# Continue the conversation
+response = session.chat("How does that compare to previous approaches?")
+print(response)
+
+### CLI Usage
+
+In the interactive chat session, you can use the `/research` command:
+
+$ llm-cli chat
+Created new session 123e4567-e89b-12d3-a456-426614174000
+Enter your messages (Ctrl+D or type 'exit' to quit):
+Use /research <query> to perform research on a topic
+
+You> Tell me about quantum computing
+LLM> Quantum computing is a type of computing that uses quantum-mechanical phenomena...
+
+You> /research latest breakthroughs in quantum computing
+LLM> Researching: latest breakthroughs in quantum computing...
+[Research results will appear here]
+
+You> That's fascinating! How will this impact cryptography?
+LLM> The developments in quantum computing will have significant implications for cryptography...
+
+The `/research` command triggers the ReAct pattern which performs comprehensive research by:
+1. Breaking down the research query
+2. Using appropriate tools to gather information
+3. Synthesising the findings into a coherent response
 
 ## API Key Management
 
@@ -85,7 +129,6 @@ The following API keys are supported:
 
 Keys can be set programmatically:
 
-```python
 from llm_interface.config.api_keys import api_key_manager
 
 # Set a key
@@ -95,7 +138,6 @@ api_key_manager.set_key("youtube", "your-api-key-here")
 if api_key_manager.has_key("youtube"):
     # Use the key
     youtube_key = api_key_manager.get_key("youtube")
-```
 
 ## Architecture
 
@@ -109,9 +151,8 @@ LLM Interface is built with a modular architecture:
 
 ## Configuration
 
-Default configuration is stored in `~/.llm_interface/config.json`. You can override settings when initializing:
+Default configuration is stored in `~/.llm_interface/config.json`. You can override settings when initialising:
 
-```python
 from llm_interface import LLMClient
 from llm_interface.config import Config
 
@@ -122,9 +163,8 @@ config_override = {
     "default_model": "llama2:13b"
 }
 
-# Initialize with custom config
+# Initialise with custom config
 client = LLMClient(config_override=config_override)
-```
 
 ## Tools
 
@@ -138,7 +178,6 @@ The ReAct (Reasoning + Acting) system combines these tools with LLM reasoning fo
 
 ## Command-Line Interface
 
-```bash
 # Show help
 llm-cli --help
 
@@ -150,9 +189,8 @@ llm-cli delete-session SESSION_ID
 
 # Show current configuration
 llm-cli show-config
-```
 
-## License
+## Licence
 
 MIT
 

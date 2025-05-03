@@ -303,6 +303,28 @@ class OllamaSession(LLMSession):
         Returns:
             The LLM's response as a string
         """
+        # Check if this is a research request
+        if message.strip().lower().startswith("/research "):
+            # Extract the research query
+            research_query = message[10:].strip()
+            if debug:
+                print(f"DEBUG - Detected research command. Query: {research_query}")
+            
+            # Add user message to history
+            self.history.append({"role": "user", "content": message})
+            
+            # Use the research_with_react method
+            research_response = self.research_with_react(research_query, debug=debug, **kwargs)
+            
+            # Add assistant response to history
+            self.history.append({"role": "assistant", "content": research_response})
+            
+            # Save session state
+            self.save()
+            
+            return research_response
+        
+        # Regular chat processing continues here...
         # Add user message to history
         self.history.append({"role": "user", "content": message})
         
