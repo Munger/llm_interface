@@ -56,9 +56,10 @@ llm-cli chat
 # Research with web search
 llm-cli research "Recent advances in quantum computing"
 
-#### CLI Arguments
+### CLI Arguments
 
 Global options (work with all commands):
+
   -m, --model MODEL    Specify Ollama model to use (default: from config)
   -h, --host HOST      Specify Ollama host (default: localhost)
   -p, --port PORT      Specify Ollama port (default: 11434)
@@ -66,6 +67,7 @@ Global options (work with all commands):
   -d, --debug          Enable debug mode for verbose output
 
 Commands:
+
   ask PROMPT           Send a single query to the LLM
   
   chat                 Start an interactive chat session
