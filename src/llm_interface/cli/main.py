@@ -204,7 +204,7 @@ def chat(ctx, session):
 )
 @click.pass_context
 def research(ctx, query, session):
-    """Perform research with web search and RAG."""
+    """Perform intelligent research with ReAct pattern."""
     client = ctx.obj["client"]
     debug = ctx.obj.get("debug", False)
     
@@ -220,7 +220,7 @@ def research(ctx, query, session):
             else:
                 click.echo(f"Created temporary session for research")
         
-        # Perform research
+        # Perform research using ReAct
         click.echo(f"Researching: {query}\n")
         
         # Show spinner if not in debug mode
@@ -231,9 +231,9 @@ def research(ctx, query, session):
                     bar.update(10)
                     # Perform the actual research when we're at 50%
                     if i == 5:
-                        response = session_obj.research(query, debug=debug)
+                        response = session_obj.research_with_react(query, debug=debug)
         else:
-            response = session_obj.research(query, debug=debug)
+            response = session_obj.research_with_react(query, debug=debug)
         
         # Print response
         click.echo("\nResearch Results:\n")
@@ -331,83 +331,29 @@ def show_config(ctx, save):
 
 @cli.command()
 @click.pass_context
-def list_models(ctx):
-    """List available models from Ollama."""
-    client = ctx.obj["client"]
+def list_tools(ctx):
+    """List available research tools."""
     debug = ctx.obj.get("debug", False)
     
     try:
-        # Make a request to Ollama's API to list models
-        import requests
+        # Import tool registry
+        from llm_interface.tools.base import registry
         
-        base_url = f"http://{client.config['ollama_host']}:{client.config['ollama_port']}"
-        url = f"{base_url}/api/tags"
+        tools = registry.list_tools()
         
-        if debug:
-            click.echo(f"DEBUG - Requesting models from: {url}")
-        
-        response = requests.get(url, timeout=client.config["timeout"])
-        response.raise_for_status()
-        
-        models_data = response.json()
-        models = models_data.get("models", [])
-        
-        if models:
-            click.echo("Available models:")
-            # Calculate column widths for nice formatting
-            name_width = max(len(model.get("name", "")) for model in models) + 2
-            
-            # Print header
-            click.echo(f"{'NAME':{name_width}} {'SIZE':<10} {'MODIFIED':<15}")
-            
-            # Print each model
-            for model in models:
-                name = model.get("name", "")
-                size = model.get("size", 0)
-                modified = model.get("modified_at", "")
-                
-                # Format size
-                if size < 1024:
-                    size_str = f"{size} B"
-                elif size < 1024 * 1024:
-                    size_str = f"{size/1024:.1f} KB"
-                elif size < 1024 * 1024 * 1024:
-                    size_str = f"{size/(1024*1024):.1f} MB"
-                else:
-                    size_str = f"{size/(1024*1024*1024):.1f} GB"
-                
-                # Format modified date
-                import datetime
-                try:
-                    dt = datetime.datetime.fromisoformat(modified.replace("Z", "+00:00"))
-                    now = datetime.datetime.now(datetime.timezone.utc)
-                    diff = now - dt
-                    
-                    if diff.days < 1:
-                        modified_str = "Today"
-                    elif diff.days < 2:
-                        modified_str = "Yesterday"
-                    elif diff.days < 7:
-                        modified_str = f"{diff.days} days ago"
-                    elif diff.days < 30:
-                        modified_str = f"{diff.days // 7} weeks ago"
-                    elif diff.days < 365:
-                        modified_str = f"{diff.days // 30} months ago"
-                    else:
-                        modified_str = f"{diff.days // 365} years ago"
-                except:
-                    modified_str = modified
-                
-                click.echo(f"{name:{name_width}} {size_str:<10} {modified_str:<15}")
+        if tools:
+            click.echo("Available research tools:")
+            for tool in tools:
+                click.echo(f"  {tool['name']}: {tool['description']}")
         else:
-            click.echo("No models found.")
+            click.echo("No research tools registered.")
         
-    except Exception as e:
+    except ImportError as e:
         if debug:
-            click.echo(f"Error listing models: {e}", err=True)
+            click.echo(f"Error loading tools: {e}", err=True)
             click.echo(traceback.format_exc(), err=True)
         else:
-            click.echo(f"Error listing models: {e}", err=True)
+            click.echo("Error: Tools module not available", err=True)
         sys.exit(1)
 
 

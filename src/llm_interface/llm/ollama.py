@@ -460,6 +460,48 @@ class OllamaSession(LLMSession):
             # Fallback if research module isn't available
             return self.chat(f"Please answer this question with your knowledge: {query}", debug=debug, **kwargs)
     
+    def research_with_react(self, query: str, debug: bool = False, **kwargs) -> str:
+        """
+        Perform in-depth research using the ReAct pattern.
+        
+        This method uses Reasoning + Acting to conduct comprehensive
+        research on the query topic, using tools as needed.
+        
+        Args:
+            query: The research question
+            debug: Whether to print debug information
+            **kwargs: Additional keyword arguments
+            
+        Returns:
+            The LLM's response enhanced with ReAct research
+        """
+        try:
+            from llm_interface.research.react import ReActResearcher
+            
+            if debug:
+                print(f"DEBUG - Starting ReAct research for query: {query}")
+            
+            # Initialize ReAct researcher
+            researcher = ReActResearcher(self.client, self.config)
+            
+            # Conduct research
+            research_context = researcher.research(query, debug=debug)
+            
+            if debug:
+                print(f"DEBUG - Research complete, synthesizing results")
+            
+            # Synthesize findings
+            response = researcher.synthesize(research_context, debug=debug)
+            
+            return response
+            
+        except ImportError as e:
+            if debug:
+                print(f"DEBUG - ReAct module not available: {e}")
+            
+            # Fallback to regular research
+            return self.research(query, debug=debug, **kwargs)
+    
     def _extract_search_terms(self, llm_response: str, original_query: str) -> List[str]:
         """
         Extract potential search terms from LLM's verbose response.
