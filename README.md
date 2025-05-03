@@ -45,52 +45,53 @@ print(response)
 response = session.research("What are the latest developments in fusion energy?")
 print(response)
 
-### Command-Line Interface
+### Command-Line Usage
 
-# Single query
+Single query:
+
 llm-cli ask "What is the capital of France?"
 
-# Start interactive chat session
+Start interactive chat session:
+
 llm-cli chat
 
-# Research with web search
+Research with web search:
+
 llm-cli research "Recent advances in quantum computing"
 
-### CLI Arguments
+## CLI Reference
 
-Global options (work with all commands):
+### Global Options
 
-  -m, --model MODEL    Specify Ollama model to use (default: from config)
-  -h, --host HOST      Specify Ollama host (default: localhost)
-  -p, --port PORT      Specify Ollama port (default: 11434)
-  -c, --config PATH    Path to custom config file
-  -d, --debug          Enable debug mode for verbose output
+-m, --model MODEL    Specify Ollama model to use (default: from config)
+-h, --host HOST      Specify Ollama host (default: localhost)
+-p, --port PORT      Specify Ollama port (default: 11434)
+-c, --config PATH    Path to custom config file
+-d, --debug          Enable debug mode for verbose output
 
-Commands:
+### Commands
 
-  ask PROMPT           Send a single query to the LLM
-  
-  chat                 Start an interactive chat session
-    -s, --session ID   Session ID (creates new if not provided)
-  
-  research QUERY       Perform intelligent research with ReAct
-    -s, --session ID   Session ID (creates temporary if not provided)
-  
-  list-sessions        List all available sessions
-  
-  delete-session ID    Delete a chat session
-    -f, --force        Force deletion without confirmation
-  
-  show-config          Show current configuration
-    -s, --save         Save config to user config file
-  
-  list-tools           List available research tools
+`ask PROMPT` - Send a single query to the LLM
+
+`chat` - Start an interactive chat session
+  * `-s, --session ID` - Session ID (creates new if not provided)
+
+`research QUERY` - Perform intelligent research with ReAct
+  * `-s, --session ID` - Session ID (creates temporary if not provided)
+
+`list-sessions` - List all available sessions
+
+`delete-session ID` - Delete a chat session
+  * `-f, --force` - Force deletion without confirmation
+
+`show-config` - Show current configuration
+  * `-s, --save` - Save config to user config file
+
+`list-tools` - List available research tools
 
 ## Research Capabilities
 
-### Using Research Commands in Chat
-
-During a chat session, you can initiate research using the `/research` command:
+You can initiate research during a chat session using the `/research` command:
 
 $ llm-cli chat
 Created new session 123e4567-e89b-12d3-a456-426614174000
