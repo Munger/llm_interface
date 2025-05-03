@@ -63,31 +63,31 @@ llm-cli research "Recent advances in quantum computing"
 
 ### Global Options
 
--m, --model MODEL    Specify Ollama model to use (default: from config)
--h, --host HOST      Specify Ollama host (default: localhost)
--p, --port PORT      Specify Ollama port (default: 11434)
--c, --config PATH    Path to custom config file
--d, --debug          Enable debug mode for verbose output
+-m, --model MODEL     Specify Ollama model to use (default: from config)
+-h, --host HOST       Specify Ollama host (default: localhost)
+-p, --port PORT       Specify Ollama port (default: 11434)
+-c, --config PATH     Path to custom config file
+-d, --debug           Enable debug mode for verbose output
 
 ### Commands
 
-`ask PROMPT` - Send a single query to the LLM
+ask PROMPT            Send a single query to the LLM
 
-`chat` - Start an interactive chat session
-  * `-s, --session ID` - Session ID (creates new if not provided)
+chat                  Start an interactive chat session
+  -s, --session ID    Session ID (creates new if not provided)
 
-`research QUERY` - Perform intelligent research with ReAct
-  * `-s, --session ID` - Session ID (creates temporary if not provided)
+research QUERY        Perform intelligent research with ReAct
+  -s, --session ID    Session ID (creates temporary if not provided)
 
-`list-sessions` - List all available sessions
+list-sessions         List all available sessions
 
-`delete-session ID` - Delete a chat session
-  * `-f, --force` - Force deletion without confirmation
+delete-session ID     Delete a chat session
+  -f, --force         Force deletion without confirmation
 
-`show-config` - Show current configuration
-  * `-s, --save` - Save config to user config file
+show-config           Show current configuration
+  -s, --save          Save config to user config file
 
-`list-tools` - List available research tools
+list-tools            List available research tools
 
 ## Research Capabilities
 
