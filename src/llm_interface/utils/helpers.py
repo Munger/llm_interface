@@ -2,6 +2,8 @@
 Utility functions for the LLM Interface.
 
 This module provides common utility functions used across the package.
+
+Author: Tim Hosking (https://github.com/Munger)
 """
 
 import os

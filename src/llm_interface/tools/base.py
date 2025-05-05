@@ -3,6 +3,8 @@ Base tool registry system for LLM Interface.
 
 This module provides the foundation for implementing tools that can be
 used by the LLM to gather information during research.
+
+Author: Tim Hosking (https://github.com/Munger)
 """
 
 from typing import Any, Callable, Dict, List, Optional

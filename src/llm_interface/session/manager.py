@@ -2,6 +2,8 @@
 Session management functionality.
 
 This module provides tools for managing LLM chat sessions.
+
+Author: Tim Hosking (https://github.com/Munger)
 """
 
 import json

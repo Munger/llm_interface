@@ -3,6 +3,8 @@ Video-specific tools for LLM research.
 
 This module provides tools for searching videos and extracting
 video metadata from various platforms.
+
+Author: Tim Hosking (https://github.com/Munger)
 """
 
 import re

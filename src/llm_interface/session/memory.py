@@ -3,6 +3,8 @@ Conversation history and context management.
 
 This module provides tools for managing conversation history and context
 within LLM sessions.
+
+Author: Tim Hosking (https://github.com/Munger)
 """
 
 from typing import Dict, List, Any, Optional

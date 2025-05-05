@@ -1,0 +1,76 @@
+{
+  "research": {
+    "system_message": {
+      "value": "IMPORTANT CONTEXT UPDATE: The user has just explicitly asked you to research: \"{query}\" using the /research command.\n\nYou have completed this research by using your RAG (Retrieval Augmented Generation) and ReAct (Reasoning+Acting) capabilities to search the web.\n\nYour research process involved:\n1. Breaking down the query into specific information needs\n2. Executing web searches and retrieving content from relevant websites\n3. Analyzing the content to extract relevant information\n4. Synthesizing the findings into a comprehensive answer\n\nThe information below comes from your web research, NOT from your training data.\n\nResearch results found during your web search for the query: {query}\n\n{findings_text}\n\n{sources_section}\n\nIMPORTANT INSTRUCTIONS:\n1. You MUST provide a substantive answer based on this research NOW, not just acknowledge that research is complete.\n2. DO NOT use [Source X] citation style. Instead, ALWAYS include the actual URL directly in your text when citing information.\n3. FORMAT CITATIONS LIKE THIS: 'According to information from (https://example.com), ESP32 can...' Include the URL directly in the sentence.\n4. ALWAYS state that you conducted web research to find this information.\n5. NEVER claim this information comes from your training data or that these sources are hypothetical.\n6. NEVER use numbered source references like [1] or [Source 1]. Always use the direct URL in the text.\n7. The user has asked you to research: {query}. Your FIRST response after research MUST be a comprehensive answer to this query.\n8. REMEMBER: These sources are REAL. You DID conduct this research. The URLs above are ACTUAL websites you found.\n9. You should ALWAYS acknowledge that you conducted this research when discussing this topic in the future.",
+      "description": "System message to be sent after research is conducted with valid findings"
+    },
+    "system_message_no_results": {
+      "value": "IMPORTANT CONTEXT UPDATE: The user has just explicitly asked you to research: \"{query}\" using the /research command.\n\nYou have completed this research by using your RAG (Retrieval Augmented Generation) and ReAct (Reasoning+Acting) capabilities to search the web.\n\nUnfortunately, the research did not return any substantive results or the search tools failed to retrieve information. When responding to the user, you should:\n\n1. Acknowledge that your web research didn't find specific information about '{query}'\n2. Clearly state that you don't have detailed information about this specific topic from your research\n3. Offer general information about the topic from your training data, clearly labeling it as such\n4. Suggest possible next steps the user could take to find more information\n5. NEVER fabricate sources, references, or specific details that weren't actually found in your research\n6. REMEMBER that you performed this research. If the user asks about it later, acknowledge that you attempted to research this topic",
+      "description": "System message to be sent after research is conducted with no valid findings"
+    },
+    "research_reminder": {
+      "value": "REMINDER - RESEARCH CONTEXT: {time_ago} ago, the user explicitly asked you to research \"{query}\" using the /research command. You performed this research using RAG and ReAct capabilities to search the web and retrieve information.\n\nYou found information from {num_sources} sources. The information you provided in your response came from this research, NOT from your training data.\n\nMake sure to acknowledge this research context in your response.",
+      "description": "Reminder to be added when the user asks about previous research"
+    },
+    "research_sources_reminder": {
+      "value": "REMINDER: You previously conducted web research on the query: '{query}'. This research is real and the sources below are actual websites you found:\n\n{url_list}\n\nWhen asked about your sources, ALWAYS provide these actual URLs. NEVER claim these sources are hypothetical or that you don't have access to the URLs.",
+      "description": "Reminder about research sources to be added when the user asks about sources"
+    },
+    "enhanced_query_template": {
+      "value": "I need you to create exactly what was requested: {query}\n\nI've provided you with web research data specifically to help with this task.\n\nIMPORTANT INSTRUCTIONS FOR YOU TO FOLLOW:\n1. You have access to web research capabilities that have been used to gather the information above.\n2. Focus on extracting and compiling the specific items requested from the research data.\n3. If the research doesn't provide enough items to fulfil the exact request (e.g., 100 items), provide as many as you can find in the data, and be clear about how many you found.\n4. Cite sources using direct URLs inline with the text, not in a separate section.\n\nBased on the provided research data, please fulfil the request: {query}\nBe direct and deliver exactly what was asked for, focusing on the specific items requested.",
+      "description": "Template for enhanced query to generate response after successful research"
+    },
+    "no_results_query_template": {
+      "value": "Unfortunately, my web research didn't find detailed information about {query}.\n\nPlease provide a response that:\n1. Acknowledges that web research didn't yield specific information\n2. Offers general information about the topic based on your knowledge\n3. Clearly separates what you know generally vs. what was found in research\n4. Suggests next steps the user could take to find more information\n5. NEVER fabricates specific sources or technical details that weren't found\n\nStart your response with: 'Based on my web research about \"{query}\", I wasn't able to find specific information.'",
+      "description": "Template for query to generate response after unsuccessful research"
+    },
+    "search_strategy_prompt": {
+      "value": "I need to research to create: \"{query}\"\n\nThis is a request that may require finding specific items or examples. Please suggest 5-7 specific search queries that would help find the exact items requested rather than just general information about the topic. Include different phrasings and specific platforms or sources where these items might be found. Just list the search queries directly, one per line, starting with a hyphen.",
+      "description": "Prompt to generate search strategies for a research query"
+    },
+    "research_detection_keywords": {
+      "value": ["what did you research", "what did you find", "where did you get", "your sources", "how do you know", "when did you", "what do you know about", "tell me about", "information on", "search", "research"],
+      "description": "Keywords that might indicate the user is asking about previous research"
+    },
+    "source_detection_keywords": {
+      "value": ["source", "url", "link", "reference", "where did you find", "research"],
+      "description": "Keywords that might indicate the user is asking about sources"
+    }
+  },
+  "response_formats": {
+    "research_response": {
+      "value": "Based on my web research about '{query}', here's what I found:\n\n{response_content}\n\nI found {num_sources} sources during my research:\n\n{sources_list}",
+      "description": "Format for responses after successful research"
+    },
+    "no_results_response": {
+      "value": "Based on my web research about '{query}', I wasn't able to find specific information. My searches didn't return any detailed results about this topic.\n\n{response_content}",
+      "description": "Format for responses after unsuccessful research"
+    }
+  },
+  "web_research": {
+    "format_findings": {
+      "value": "Finding {index}: {need}\nTool: {tool}\n{tool_specific_content}\n",
+      "description": "Format for research findings"
+    },
+    "format_web_search_results": {
+      "value": "Found {count} search results:\n{results_content}",
+      "description": "Format for web search results"
+    },
+    "format_search_result": {
+      "value": "- Source {i}.{j}: {title}: {snippet}\n  URL: {url}\n",
+      "description": "Format for a single search result"
+    },
+    "format_webpage_content": {
+      "value": "Source {i}: {title}\nURL: {url}\nContent summary: {content_summary}\n",
+      "description": "Format for webpage content"
+    },
+    "format_sources_section": {
+      "value": "SOURCES REFERENCED DURING RESEARCH:\n{sources_list}",
+      "description": "Format for the sources section"
+    },
+    "format_source_entry": {
+      "value": "[Source {index}] {title}\nURL: {url}\n\n",
+      "description": "Format for a single source entry"
+    }
+  }
+}

@@ -9,7 +9,7 @@ take actions to gather that information.
 import re
 import json
 import time
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Union
 
 from llm_interface.config import Config
 from llm_interface.tools.base import registry as tool_registry
@@ -85,6 +85,27 @@ class ReActResearcher:
                 tool_selection_result = self.llm_client.query(tool_selection_prompt, debug=debug)
                 tool_name, params = self._extract_tool_selection(tool_selection_result)
                 
+                # Fix for empty query parameters - use the research need as the query if empty
+                if tool_name in ['web_search', 'search_and_read', 'find_list'] and (
+                    'query' not in params or not params['query'].strip()
+                ):
+                    # Create a search query from the research need
+                    search_query = self._create_search_query_from_need(need)
+                    params['query'] = search_query
+                    if debug:
+                        print(f"DEBUG - Empty query detected. Using research need as query: {search_query}")
+                
+                # Fix parameter names for search_and_read
+                if tool_name == 'search_and_read':
+                    # Convert num_results to max_results
+                    if 'num_results' in params:
+                        params['max_results'] = params.pop('num_results')
+                    
+                    # Remove unsupported parameters
+                    for param in list(params.keys()):
+                        if param not in ['query', 'max_results']:
+                            params.pop(param, None)
+                
                 if debug:
                     print(f"DEBUG - Selected tool: {tool_name}, params: {params}")
                 
@@ -112,10 +133,37 @@ class ReActResearcher:
                     if debug:
                         print(f"DEBUG - Tool execution failed: {e}")
                     
-                    # Record the failure
+                    # Record the failure but continue with research
                     iteration_context["observations"].append(
                         {"error": f"Tool execution failed: {str(e)}"}
                     )
+                    
+                    # Try to fallback to web_search if another tool failed
+                    if tool_name != 'web_search':
+                        try:
+                            if debug:
+                                print(f"DEBUG - Attempting fallback to web_search")
+                            search_query = self._create_search_query_from_need(need)
+                            result = tool_registry.execute_tool('web_search', query=search_query)
+                            
+                            # Add to context
+                            context["tools_used"].append('web_search')
+                            iteration_context["actions"].append({"tool": 'web_search', "params": {"query": search_query}})
+                            iteration_context["observations"].append(result)
+                            
+                            # Add finding
+                            context["findings"].append({
+                                "need": need,
+                                "tool": 'web_search',
+                                "result": result
+                            })
+                            
+                            if debug:
+                                print(f"DEBUG - Fallback to web_search successful")
+                                
+                        except Exception as fallback_err:
+                            if debug:
+                                print(f"DEBUG - Fallback to web_search failed: {fallback_err}")
             
             # Add iteration to context
             context["iterations"].append(iteration_context)
@@ -230,7 +278,9 @@ class ReActResearcher:
             f"Parameters: {{\n"
             f"  \"param1\": \"value1\",\n"
             f"  \"param2\": \"value2\"\n"
-            f"}}"
+            f"}}\n\n"
+            f"IMPORTANT: For search tools like web_search or search_and_read, you MUST provide a specific, "
+            f"non-empty search query that includes relevant keywords from the research need."
         )
     
     def _extract_tool_selection(self, tool_selection_result: str) -> Tuple[str, Dict[str, Any]]:
@@ -291,8 +341,61 @@ class ReActResearcher:
             else:
                 # Default to empty URL
                 params["url"] = ""
+                
+        elif tool_name == "search_and_read" and "query" not in params:
+            # Extract potential query from the context
+            query_pattern = r'(?:query|search for|research):\s*"?([^"]+)"?'
+            query_match = re.search(query_pattern, tool_selection_result, re.IGNORECASE)
+            
+            if query_match:
+                params["query"] = query_match.group(1)
+            else:
+                # If no query found, use an empty string
+                params["query"] = ""
         
         return tool_name, params
+    
+    def _create_search_query_from_need(self, need: str) -> str:
+        """
+        Create a search query from a research need statement.
+        This is used as a fallback when no query is provided.
+        
+        Args:
+            need: Research need statement
+            
+        Returns:
+            Search query string
+        """
+        # Clean up the need to create a search query
+        query = need
+        
+        # Remove prefixes like "What is" or "How to"
+        query = re.sub(r'^(?:what|how|why|when|where|who|which)\s+(?:is|are|does|do|can|should|would|will|has|have)\s+', '', query, flags=re.IGNORECASE)
+        
+        # Remove question marks
+        query = query.replace('?', '')
+        
+        # Extract key phrases using regex
+        key_phrase_pattern = r'"([^"]+)"'
+        key_phrases = re.findall(key_phrase_pattern, query)
+        
+        if key_phrases:
+            # Use quoted phrases in the query if found
+            return ' '.join(key_phrases)
+        
+        # Extract key terms (longer words more likely to be important)
+        words = re.findall(r'\b\w{4,}\b', query)
+        
+        # Remove common stop words
+        stop_words = {'this', 'that', 'these', 'those', 'what', 'which', 'when', 'where', 'who', 'whose', 'whom', 'how', 'why'}
+        keywords = [word for word in words if word.lower() not in stop_words]
+        
+        # If we don't have enough keywords, use the original query
+        if len(keywords) < 3:
+            return query
+        
+        # Otherwise join keywords
+        return ' '.join(keywords)
     
     def _create_evaluation_prompt(self, query: str, context: Dict[str, Any]) -> str:
         """Create prompt for evaluating research progress."""
@@ -405,54 +508,77 @@ class ReActResearcher:
         
         # Format findings in a readable way
         findings_text = ""
-        for i, finding in enumerate(research_context.get("findings", []), 1):
-            need = finding.get("need", "")
-            tool = finding.get("tool", "")
-            result = finding.get("result", {})
-            
-            findings_text += f"Source {i}: {need}\n"
-            
-            # Format result based on tool type
-            if tool == "web_search":
-                results = result.get("results", [])
-                for j, res in enumerate(results[:5], 1):
-                    findings_text += f"- {res.get('title', '')}: {res.get('snippet', '')}\n"
-                    findings_text += f"  URL: {res.get('url', '')}\n"
-            
-            elif tool == "fetch_webpage":
-                url = result.get("url", "")
-                content = result.get("content", "")
-                findings_text += f"- Webpage: {url}\n"
-                
-                # Add a brief excerpt of the content
-                if content:
-                    content_excerpt = content[:500] + "..." if len(content) > 500 else content
-                    findings_text += f"- Content excerpt: {content_excerpt}\n"
-            
-            elif tool == "search_and_read" or tool == "find_list":
-                url = result.get("url", "")
-                title = result.get("title", "")
-                content = result.get("content", "")
-                
-                findings_text += f"- Source: {title}\n"
-                findings_text += f"- URL: {url}\n"
-                
-                # Add a brief excerpt of the content
-                if content:
-                    content_excerpt = content[:500] + "..." if len(content) > 500 else content
-                    findings_text += f"- Content excerpt: {content_excerpt}\n"
-            
-            findings_text += "\n"
         
-        return (
-            f"I've researched the question: {query}\n\n"
-            f"Based on my research, I have gathered the following information:\n\n"
-            f"{findings_text}\n"
-            f"Using this information, provide a comprehensive, well-organized answer to the original question.\n\n"
-            f"Important guidelines:\n"
-            f"1. Cite your sources using [Source X] notation when referencing specific information\n"
-            f"2. If the research involves finding a list of items, make sure to extract and present the actual items\n"
-            f"3. If there are conflicting pieces of information, acknowledge them and explain which seems most reliable\n"
-            f"4. If some aspects of the question couldn't be answered by the research, acknowledge those limitations\n\n"
-            f"Format your response in a clear, structured way that directly answers the original question."
-        )
+        # Check if we actually found any useful information
+        useful_findings = [f for f in research_context.get("findings", []) 
+                           if f.get("tool") in ["web_search", "fetch_webpage", "search_and_read", "find_list"] and 
+                              isinstance(f.get("result", {}), dict)]
+                              
+        has_useful_info = len(useful_findings) > 0
+        
+        if has_useful_info:
+            for i, finding in enumerate(research_context.get("findings", []), 1):
+                need = finding.get("need", "")
+                tool = finding.get("tool", "")
+                result = finding.get("result", {})
+                
+                findings_text += f"Source {i}: {need}\n"
+                
+                # Format result based on tool type
+                if tool == "web_search":
+                    results = result.get("results", [])
+                    for j, res in enumerate(results[:5], 1):
+                        findings_text += f"- {res.get('title', '')}: {res.get('snippet', '')}\n"
+                        findings_text += f"  URL: {res.get('url', '')}\n"
+                
+                elif tool == "fetch_webpage":
+                    url = result.get("url", "")
+                    content = result.get("content", "")
+                    findings_text += f"- Webpage: {url}\n"
+                    
+                    # Add a brief excerpt of the content
+                    if content:
+                        content_excerpt = content[:500] + "..." if len(content) > 500 else content
+                        findings_text += f"- Content excerpt: {content_excerpt}\n"
+                
+                elif tool == "search_and_read" or tool == "find_list":
+                    url = result.get("url", "")
+                    title = result.get("title", "")
+                    content = result.get("content", "")
+                    
+                    findings_text += f"- Source: {title}\n"
+                    findings_text += f"- URL: {url}\n"
+                    
+                    # Add a brief excerpt of the content
+                    if content:
+                        content_excerpt = content[:500] + "..." if len(content) > 500 else content
+                        findings_text += f"- Content excerpt: {content_excerpt}\n"
+                
+                findings_text += "\n"
+        else:
+            findings_text = "No relevant information was found during the research process. Please provide a response based on your general knowledge while acknowledging the limitations of the research."
+        
+        if has_useful_info:
+            return (
+                f"I've researched the question: {query}\n\n"
+                f"Based on my research, I have gathered the following information:\n\n{findings_text}\n"
+                f"Using this information, provide a comprehensive, well-organized answer to the original question.\n\n"
+                f"Important guidelines:\n"
+                f"1. When referencing information from a source, include the source URL directly in your text.\n"
+                f"2. If there are conflicting pieces of information, acknowledge them and explain which seems most reliable.\n"
+                f"3. If some aspects of the question couldn't be answered by the research, acknowledge those limitations.\n"
+                f"4. Start your response with: 'Based on my web research about \"{query}\", here's what I found:'\n\n"
+                f"Format your response in a clear, structured way that directly answers the original question."
+            )
+        else:
+            return (
+                f"I've researched the question: {query}\n\n"
+                f"Unfortunately, my research didn't yield specific information about this topic. "
+                f"Based on this outcome, please provide a response that:\n\n"
+                f"1. Acknowledges the limitations of the research\n"
+                f"2. Explains that specific information about communicating with an HP power supply using an ESP32 wasn't found\n"
+                f"3. Offers general information about ESP32 communication capabilities and what might be needed\n"
+                f"4. Suggests next steps the user could take to find more specific information\n\n"
+                f"Start your response with: 'Based on my web research about \"{query}\", I wasn't able to find specific information.'\n\n"
+                f"Format your response in a clear, structured way that acknowledges the limitations while still being helpful."
+            )

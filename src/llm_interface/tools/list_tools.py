@@ -3,6 +3,8 @@ List processing tools for LLM research.
 
 This module provides tools for generating, processing, and aggregating
 lists of information for more comprehensive research results.
+
+Author: Tim Hosking (https://github.com/Munger)
 """
 
 import time

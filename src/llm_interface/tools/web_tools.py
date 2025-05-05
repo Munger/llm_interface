@@ -3,6 +3,8 @@ Web-based tools for LLM research.
 
 This module provides tools for web searching, content extraction,
 and other web-based information gathering.
+
+Author: Tim Hosking (https://github.com/Munger)
 """
 
 import time
